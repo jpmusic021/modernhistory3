@@ -15,8 +15,8 @@
         }
         .main-container {
             display: flex;
-            height: 100vh;
-            width: 100vw;
+            min-height: 100vh; /* Changed from height to min-height */
+            width: 100%; /* Changed from 100vw */
             align-items: center;
             justify-content: center;
         }
@@ -26,25 +26,40 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
             border: 1px solid #e5e7eb;
         }
-        .quiz-grid {
-            display: grid;
-            grid-template-columns: 1fr 280px;
-            gap: 1.5rem;
-            height: calc(100vh - 4rem);
-            max-height: 800px;
+        /* Responsive Quiz Layout */
+        .quiz-card {
             width: 100%;
             max-width: 1200px;
+            margin: 1rem;
+            max-height: calc(100vh - 2rem);
+        }
+        .quiz-grid {
+            display: flex; /* Flex display for mobile */
+            flex-direction: column; /* Stack vertically on mobile */
+            height: 100%;
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .quiz-grid {
+                display: grid;
+                grid-template-columns: 1fr 280px;
+                gap: 1.5rem;
+            }
         }
         .question-panel {
-            grid-column: 1 / 2;
             display: flex;
             flex-direction: column;
+            overflow: hidden; /* Prevent inner scrollbars from messing up layout */
         }
         .palette-panel {
-            grid-column: 2 / 3;
-            border-left: 1px solid #e5e7eb;
+            border-top: 1px solid #e5e7eb; /* Border for mobile view */
             padding: 1rem;
             overflow-y: auto;
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .palette-panel {
+                border-top: none;
+                border-left: 1px solid #e5e7eb;
+            }
         }
         .palette-btn {
             width: 45px;
@@ -68,12 +83,20 @@
             transition: all 0.3s ease;
         }
         .option-btn:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            border-color: #60a5fa;
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.3);
+            border-color: #3b82f6;
         }
-        .correct { background-color: #d1fae5 !important; border-color: #10b981 !important; }
-        .incorrect { background-color: #fee2e2 !important; border-color: #ef4444 !important; }
+        .correct .option-btn {
+            background-color: #10b981;
+            color: white;
+            border-color: #059669;
+        }
+        .incorrect .option-btn {
+            background-color: #ef4444;
+            color: white;
+            border-color: #b91c1c;
+        }
         .explanation-box { background-color: #f0f9ff; border-left: 4px solid #38bdf8; }
         .nav-btn:disabled { background-color: #9ca3af; cursor: not-allowed; }
         .submit-btn:disabled { background-color: #9ca3af; cursor: not-allowed; }
@@ -81,7 +104,7 @@
 </head>
 <body>
 
-    <div id="main-container" class="main-container p-4">
+    <div id="main-container" class="main-container p-2 md:p-4">
 
         <!-- Registration/Login Screen -->
         <div id="auth-screen" class="auth-card w-full max-w-md p-8 space-y-6">
@@ -139,7 +162,7 @@
             <!-- Question Palette Panel -->
             <div class="palette-panel">
                 <h3 class="text-lg font-bold mb-4 text-center">પ્રશ્ન પેનલ</h3>
-                <div id="question-palette" class="grid grid-cols-4 gap-3"></div>
+                <div id="question-palette" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-4 gap-3"></div>
                  <div class="mt-6 space-y-2 text-sm">
                     <div class="flex items-center"><div class="w-4 h-4 rounded-full bg-white border-2 border-gray-400 mr-2"></div> વણઉકેલાયેલ</div>
                     <div class="flex items-center"><div class="w-4 h-4 rounded-full bg-green-500 mr-2"></div> ઉકેલાયેલ</div>
@@ -164,8 +187,6 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
         // IMPORTANT: Replace with your web app's Firebase configuration
-        // આ ક્વિઝ કામ કરે તે માટે, તમારે તમારા ફાયરબેઝ પ્રોજેક્ટની વિગતો અહીં ઉમેરવી પડશે.
-        // ફાયરબેઝ કન્સોલમાં Email/Password સાઇન-ઇન પદ્ધતિને સક્ષમ કરવાનું ભૂલશો નહીં.
         const firebaseConfig = {
             apiKey: "AIzaSyBMj4hWejJBluFqH7QgzmyAR2X75cWPhVs",
             authDomain: "jpmusic-fe07f.firebaseapp.com",
