@@ -76,18 +76,53 @@
         .incorrect { background-color: #fee2e2 !important; border-color: #ef4444 !important; }
         .explanation-box { background-color: #f0f9ff; border-left: 4px solid #38bdf8; }
         .nav-btn:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        .submit-btn:disabled { background-color: #9ca3af; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-    
+    <div id="main-container" class="main-container p-4">
+
+        <!-- Registration/Login Screen -->
+        <div id="auth-screen" class="auth-card w-full max-w-md p-8 space-y-6">
+            <h2 id="auth-title" class="text-3xl font-bold text-center text-gray-900">રજીસ્ટ્રેશન</h2>
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">ઈમેલ</label>
+                    <input type="email" id="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">પાસવર્ડ (ઓછામાં ઓછા 6 અક્ષર)</label>
+                    <input type="password" id="password" required minlength="6" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div id="confirm-password-field">
+                    <label for="confirm-password" class="block text-sm font-medium text-gray-700">પાસવર્ડ કન્ફર્મ કરો</label>
+                    <input type="password" id="confirm-password" required minlength="6" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div id="captcha-field">
+                    <label for="captcha" class="block text-sm font-medium text-gray-700">
+                        <span id="captcha-question"></span>
+                    </label>
+                    <input type="number" id="captcha" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <p id="auth-error" class="text-red-600 text-sm font-semibold text-center"></p>
+                <button type="submit" id="auth-submit-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 submit-btn">રજીસ્ટર કરો</button>
+            </form>
+            <p class="text-center text-sm">
+                <a href="#" id="auth-toggle-link" class="font-medium text-indigo-600 hover:text-indigo-500">પહેલેથી જ એકાઉન્ટ છે? લોગઇન કરો</a>
+            </p>
+        </div>
 
         <!-- Quiz Screen -->
         <div id="quiz-screen" class="quiz-card quiz-grid hidden">
             <!-- Question Panel -->
             <div class="question-panel p-4">
+                 <div class="flex justify-between items-center mb-4 pb-4 border-b">
+                    <h2 class="text-2xl font-bold text-gray-800">ઇતિહાસ ક્વિઝ</h2>
+                    <button id="logout-btn" class="text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-md px-4 py-2 transition-colors">લોગઆઉટ</button>
+                </div>
                 <div class="flex-grow overflow-y-auto pr-4">
-                    <h2 id="question-header" class="text-2xl font-bold text-gray-800 mb-4"></h2>
+                    <h3 id="question-header" class="text-xl font-bold text-gray-800 mb-4"></h3>
                     <p id="question-text" class="text-lg text-gray-700 mb-6"></p>
                     <div id="options-container" class="space-y-4"></div>
                     <div id="explanation-box" class="explanation-box p-4 mt-6 rounded-md hidden">
@@ -128,7 +163,9 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
-        // Your web app's Firebase configuration
+        // IMPORTANT: Replace with your web app's Firebase configuration
+        // આ ક્વિઝ કામ કરે તે માટે, તમારે તમારા ફાયરબેઝ પ્રોજેક્ટની વિગતો અહીં ઉમેરવી પડશે.
+        // ફાયરબેઝ કન્સોલમાં Email/Password સાઇન-ઇન પદ્ધતિને સક્ષમ કરવાનું ભૂલશો નહીં.
         const firebaseConfig = {
             apiKey: "AIzaSyBMj4hWejJBluFqH7QgzmyAR2X75cWPhVs",
             authDomain: "jpmusic-fe07f.firebaseapp.com",
@@ -140,7 +177,7 @@
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+        const auth = getAuth();
 
         // Quiz Data
         const quizData = [
@@ -222,6 +259,7 @@
         const captchaInput = document.getElementById('captcha');
         const captchaQuestionSpan = document.getElementById('captcha-question');
         const authError = document.getElementById('auth-error');
+        const logoutBtn = document.getElementById('logout-btn');
         
         let isLogin = false;
         let captchaAnswer = 0;
@@ -258,37 +296,56 @@
             toggleAuthMode();
         });
 
-        authForm.addEventListener('submit', (e) => {
+        authForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = emailInput.value;
             const password = passwordInput.value;
             authError.textContent = '';
+            authSubmitBtn.disabled = true;
+            authSubmitBtn.textContent = 'પ્રક્રિયા ચાલુ છે...';
 
-            if (isLogin) {
-                signInWithEmailAndPassword(auth, email, password)
-                    .catch((error) => {
+            try {
+                if (isLogin) {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } else {
+                    const confirmPassword = confirmPasswordInput.value;
+                    const captchaValue = parseInt(captchaInput.value, 10);
+                    if (password !== confirmPassword) {
+                        throw { code: 'custom/password-mismatch' };
+                    }
+                    if (captchaValue !== captchaAnswer) {
+                        throw { code: 'custom/captcha-wrong' };
+                    }
+                    await createUserWithEmailAndPassword(auth, email, password);
+                }
+            } catch (error) {
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                    case 'auth/wrong-password':
                         authError.textContent = 'ઈમેલ અથવા પાસવર્ડ ખોટો છે.';
-                    });
-            } else {
-                const confirmPassword = confirmPasswordInput.value;
-                const captchaValue = parseInt(captchaInput.value, 10);
-                if (password !== confirmPassword) {
-                    authError.textContent = 'બંને પાસવર્ડ મેળ ખાતા નથી.';
-                    return;
+                        break;
+                    case 'auth/email-already-in-use':
+                        authError.textContent = 'આ ઈમેલ પહેલેથી જ રજીસ્ટર થયેલ છે.';
+                        break;
+                    case 'auth/weak-password':
+                        authError.textContent = 'પાસવર્ડ ખૂબ નબળો છે. ઓછામાં ઓછા 6 અક્ષર હોવા જોઈએ.';
+                        break;
+                    case 'auth/invalid-email':
+                        authError.textContent = 'કૃપા કરીને સાચો ઈમેલ દાખલ કરો.';
+                        break;
+                    case 'custom/password-mismatch':
+                        authError.textContent = 'બંને પાસવર્ડ મેળ ખાતા નથી.';
+                        break;
+                    case 'custom/captcha-wrong':
+                        authError.textContent = 'કેપ્ચા જવાબ ખોટો છે.';
+                        generateCaptcha();
+                        break;
+                    default:
+                        authError.textContent = 'એક ભૂલ આવી. કૃપા કરીને ફરી પ્રયાસ કરો.';
                 }
-                if (captchaValue !== captchaAnswer) {
-                    authError.textContent = 'કેપ્ચા જવાબ ખોટો છે.';
-                    generateCaptcha();
-                    return;
-                }
-                createUserWithEmailAndPassword(auth, email, password)
-                    .catch((error) => {
-                        if (error.code === 'auth/email-already-in-use') {
-                            authError.textContent = 'આ ઈમેલ પહેલેથી જ રજીસ્ટર થયેલ છે.';
-                        } else {
-                            authError.textContent = 'રજીસ્ટ્રેશનમાં ભૂલ આવી. ફરી પ્રયાસ કરો.';
-                        }
-                    });
+            } finally {
+                authSubmitBtn.disabled = false;
+                authSubmitBtn.textContent = isLogin ? 'લોગઇન કરો' : 'રજીસ્ટર કરો';
             }
         });
         
@@ -304,6 +361,10 @@
                 resultScreen.classList.add('hidden');
                 if (!isLogin) generateCaptcha();
             }
+        });
+        
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth);
         });
 
         // --- QUIZ LOGIC ---
