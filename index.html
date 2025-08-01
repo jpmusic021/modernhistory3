@@ -15,30 +15,27 @@
         }
         .main-container {
             display: flex;
-            min-height: 100vh; /* Changed from height to min-height */
-            width: 100%; /* Changed from 100vw */
+            min-height: 100vh;
+            width: 100%;
             align-items: center;
             justify-content: center;
         }
-        .auth-card, .quiz-card {
+        .quiz-card {
             background: #ffffff;
             border-radius: 24px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
             border: 1px solid #e5e7eb;
-        }
-        /* Responsive Quiz Layout */
-        .quiz-card {
             width: 100%;
             max-width: 1200px;
             margin: 1rem;
             max-height: calc(100vh - 2rem);
         }
         .quiz-grid {
-            display: flex; /* Flex display for mobile */
-            flex-direction: column; /* Stack vertically on mobile */
+            display: flex;
+            flex-direction: column;
             height: 100%;
         }
-        @media (min-width: 768px) { /* md breakpoint */
+        @media (min-width: 768px) {
             .quiz-grid {
                 display: grid;
                 grid-template-columns: 1fr 280px;
@@ -48,14 +45,14 @@
         .question-panel {
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* Prevent inner scrollbars from messing up layout */
+            overflow: hidden;
         }
         .palette-panel {
-            border-top: 1px solid #e5e7eb; /* Border for mobile view */
+            border-top: 1px solid #e5e7eb;
             padding: 1rem;
             overflow-y: auto;
         }
-        @media (min-width: 768px) { /* md breakpoint */
+        @media (min-width: 768px) {
             .palette-panel {
                 border-top: none;
                 border-left: 1px solid #e5e7eb;
@@ -99,51 +96,19 @@
         }
         .explanation-box { background-color: #f0f9ff; border-left: 4px solid #38bdf8; }
         .nav-btn:disabled { background-color: #9ca3af; cursor: not-allowed; }
-        .submit-btn:disabled { background-color: #9ca3af; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
     <div id="main-container" class="main-container p-2 md:p-4">
 
-        <!-- Registration/Login Screen -->
-        <div id="auth-screen" class="auth-card w-full max-w-md p-8 space-y-6">
-            <h2 id="auth-title" class="text-3xl font-bold text-center text-gray-900">રજીસ્ટ્રેશન</h2>
-            <form id="auth-form" class="space-y-4">
-                <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700">ઈમેલ</label>
-                    <input type="email" id="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700">પાસવર્ડ (ઓછામાં ઓછા 6 અક્ષર)</label>
-                    <input type="password" id="password" required minlength="6" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div id="confirm-password-field">
-                    <label for="confirm-password" class="block text-sm font-medium text-gray-700">પાસવર્ડ કન્ફર્મ કરો</label>
-                    <input type="password" id="confirm-password" required minlength="6" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div id="captcha-field">
-                    <label for="captcha" class="block text-sm font-medium text-gray-700">
-                        <span id="captcha-question"></span>
-                    </label>
-                    <input type="number" id="captcha" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <p id="auth-error" class="text-red-600 text-sm font-semibold text-center"></p>
-                <button type="submit" id="auth-submit-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 submit-btn">રજીસ્ટર કરો</button>
-            </form>
-            <p class="text-center text-sm">
-                <a href="#" id="auth-toggle-link" class="font-medium text-indigo-600 hover:text-indigo-500">પહેલેથી જ એકાઉન્ટ છે? લોગઇન કરો</a>
-            </p>
-        </div>
-
         <!-- Quiz Screen -->
-        <div id="quiz-screen" class="quiz-card quiz-grid hidden">
+        <div id="quiz-screen" class="quiz-card quiz-grid">
             <!-- Question Panel -->
             <div class="question-panel p-4">
                  <div class="flex justify-between items-center mb-4 pb-4 border-b">
                     <h2 class="text-2xl font-bold text-gray-800">ઇતિહાસ ક્વિઝ</h2>
-                    <button id="logout-btn" class="text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-md px-4 py-2 transition-colors">લોગઆઉટ</button>
-                </div>
+                 </div>
                 <div class="flex-grow overflow-y-auto pr-4">
                     <h3 id="question-header" class="text-xl font-bold text-gray-800 mb-4"></h3>
                     <p id="question-text" class="text-lg text-gray-700 mb-6"></p>
@@ -172,7 +137,7 @@
         </div>
         
         <!-- Result Screen -->
-        <div id="result-screen" class="auth-card w-full max-w-md p-8 space-y-6 hidden">
+        <div id="result-screen" class="quiz-card w-full max-w-md p-8 space-y-6 hidden">
              <h2 class="text-3xl font-bold text-center text-gray-900">ક્વિઝ પૂર્ણ!</h2>
              <p class="text-xl text-center">તમારો અંતિમ સ્કોર:</p>
              <p id="final-score" class="text-5xl font-bold text-center text-indigo-600"></p>
@@ -181,25 +146,7 @@
 
     </div>
 
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-
-        // IMPORTANT: Replace with your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBMj4hWejJBluFqH7QgzmyAR2X75cWPhVs",
-            authDomain: "jpmusic-fe07f.firebaseapp.com",
-            projectId: "jpmusic-fe07f",
-            storageBucket: "jpmusic-fe07f.appspot.com",
-            messagingSenderId: "643212893364",
-            appId: "1:643212893364:web:c1eff668dde3cd38270be1"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth();
-
+    <script>
         // Quiz Data
         const quizData = [
             { question: "૧. હરિજનો માટે અલગ મતદાર મંડળની વ્યવસ્થાને કયા કરારમાં અનામત બેઠકોથી બદલી દેવામાં આવી હતી?", options: ["લખનઉ કરાર", "પૂના કરાર", "ગાંધી-ઇરવિન કરાર", "શિમલા કરાર"], answer: "પૂના કરાર", explanation: "1932માં ગાંધીજી અને આંબેડકર વચ્ચે થયેલા પૂના કરારમાં અલગ મતદાર મંડળને બદલે પ્રાંતીય ધારાસભાઓમાં દલિત વર્ગો માટે બેઠકો અનામત રાખવા પર સહમતિ બની." },
@@ -451,6 +398,7 @@
             shuffledOptions.forEach((option, index) => {
                  const originalIndex = currentQuestion.options.indexOf(option);
                  const optionDiv = document.createElement('div');
+                 optionDiv.dataset.option = option;
                 optionDiv.innerHTML = `
                     <button class="option-btn w-full text-left p-3 border-2 rounded-lg bg-gray-50">
                         <span class="font-bold mr-2">${options[originalIndex]}.</span> ${option}
@@ -499,16 +447,17 @@
 
             const correctAnswer = quizData[currentQuestionIndex].answer;
             
-            Array.from(optionsContainer.querySelectorAll('button')).forEach(button => {
+            Array.from(optionsContainer.children).forEach(optionDiv => {
+                const button = optionDiv.querySelector('button');
                 button.disabled = true;
-                const optionText = button.textContent.substring(3).trim();
+                const optionText = optionDiv.dataset.option;
                 
                 if (optionText === correctAnswer) {
-                    button.parentElement.classList.add('correct');
+                    optionDiv.classList.add('correct');
                 }
                 
                 if (optionText === userAnswer.selected && !userAnswer.isCorrect) {
-                    button.parentElement.classList.add('incorrect');
+                    optionDiv.classList.add('incorrect');
                 }
             });
 
