@@ -211,131 +211,9 @@
         let score = 0;
         let userAnswers = [];
 
-        // --- AUTH LOGIC ---
-        const authScreen = document.getElementById('auth-screen');
+        // --- QUIZ LOGIC ---
         const quizScreen = document.getElementById('quiz-screen');
         const resultScreen = document.getElementById('result-screen');
-        const authForm = document.getElementById('auth-form');
-        const authTitle = document.getElementById('auth-title');
-        const confirmPasswordField = document.getElementById('confirm-password-field');
-        const captchaField = document.getElementById('captcha-field');
-        const authSubmitBtn = document.getElementById('auth-submit-btn');
-        const authToggleLink = document.getElementById('auth-toggle-link');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const confirmPasswordInput = document.getElementById('confirm-password');
-        const captchaInput = document.getElementById('captcha');
-        const captchaQuestionSpan = document.getElementById('captcha-question');
-        const authError = document.getElementById('auth-error');
-        const logoutBtn = document.getElementById('logout-btn');
-        
-        let isLogin = false;
-        let captchaAnswer = 0;
-
-        function generateCaptcha() {
-            const num1 = Math.floor(Math.random() * 10) + 1;
-            const num2 = Math.floor(Math.random() * 10) + 1;
-            captchaAnswer = num1 + num2;
-            captchaQuestionSpan.textContent = `કેપ્ચા: ${num1} + ${num2} = ?`;
-        }
-
-        function toggleAuthMode() {
-            isLogin = !isLogin;
-            authError.textContent = '';
-            authForm.reset();
-            if (isLogin) {
-                authTitle.textContent = 'લોગઇન';
-                confirmPasswordField.style.display = 'none';
-                captchaField.style.display = 'none';
-                authSubmitBtn.textContent = 'લોગઇન કરો';
-                authToggleLink.textContent = 'એકાઉન્ટ નથી? રજીસ્ટર કરો';
-            } else {
-                authTitle.textContent = 'રજીસ્ટ્રેશન';
-                confirmPasswordField.style.display = 'block';
-                captchaField.style.display = 'block';
-                authSubmitBtn.textContent = 'રજીસ્ટર કરો';
-                authToggleLink.textContent = 'પહેલેથી જ એકાઉન્ટ છે? લોગઇન કરો';
-                generateCaptcha();
-            }
-        }
-
-        authToggleLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            toggleAuthMode();
-        });
-
-        authForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            authError.textContent = '';
-            authSubmitBtn.disabled = true;
-            authSubmitBtn.textContent = 'પ્રક્રિયા ચાલુ છે...';
-
-            try {
-                if (isLogin) {
-                    await signInWithEmailAndPassword(auth, email, password);
-                } else {
-                    const confirmPassword = confirmPasswordInput.value;
-                    const captchaValue = parseInt(captchaInput.value, 10);
-                    if (password !== confirmPassword) {
-                        throw { code: 'custom/password-mismatch' };
-                    }
-                    if (captchaValue !== captchaAnswer) {
-                        throw { code: 'custom/captcha-wrong' };
-                    }
-                    await createUserWithEmailAndPassword(auth, email, password);
-                }
-            } catch (error) {
-                switch (error.code) {
-                    case 'auth/user-not-found':
-                    case 'auth/wrong-password':
-                        authError.textContent = 'ઈમેલ અથવા પાસવર્ડ ખોટો છે.';
-                        break;
-                    case 'auth/email-already-in-use':
-                        authError.textContent = 'આ ઈમેલ પહેલેથી જ રજીસ્ટર થયેલ છે.';
-                        break;
-                    case 'auth/weak-password':
-                        authError.textContent = 'પાસવર્ડ ખૂબ નબળો છે. ઓછામાં ઓછા 6 અક્ષર હોવા જોઈએ.';
-                        break;
-                    case 'auth/invalid-email':
-                        authError.textContent = 'કૃપા કરીને સાચો ઈમેલ દાખલ કરો.';
-                        break;
-                    case 'custom/password-mismatch':
-                        authError.textContent = 'બંને પાસવર્ડ મેળ ખાતા નથી.';
-                        break;
-                    case 'custom/captcha-wrong':
-                        authError.textContent = 'કેપ્ચા જવાબ ખોટો છે.';
-                        generateCaptcha();
-                        break;
-                    default:
-                        authError.textContent = 'એક ભૂલ આવી. કૃપા કરીને ફરી પ્રયાસ કરો.';
-                }
-            } finally {
-                authSubmitBtn.disabled = false;
-                authSubmitBtn.textContent = isLogin ? 'લોગઇન કરો' : 'રજીસ્ટર કરો';
-            }
-        });
-        
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                authScreen.classList.add('hidden');
-                quizScreen.classList.remove('hidden');
-                resultScreen.classList.add('hidden');
-                startQuiz();
-            } else {
-                authScreen.classList.remove('hidden');
-                quizScreen.classList.add('hidden');
-                resultScreen.classList.add('hidden');
-                if (!isLogin) generateCaptcha();
-            }
-        });
-        
-        logoutBtn.addEventListener('click', () => {
-            signOut(auth);
-        });
-
-        // --- QUIZ LOGIC ---
         const questionHeader = document.getElementById('question-header');
         const questionText = document.getElementById('question-text');
         const optionsContainer = document.getElementById('options-container');
@@ -490,6 +368,8 @@
         
         restartBtn.addEventListener('click', startQuiz);
 
+        // Initial load
+        startQuiz();
     </script>
 </body>
 </html>
