@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>સંપૂર્ણ ઇતિહાસ પરીક્ષા પોર્ટલ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans Gujarati', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .main-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            align-items: center;
+            justify-content: center;
+        }
+        .auth-card, .quiz-card {
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e5e7eb;
+        }
+        .quiz-grid {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 1.5rem;
+            height: calc(100vh - 4rem);
+            max-height: 800px;
+            width: 100%;
+            max-width: 1200px;
+        }
+        .question-panel {
+            grid-column: 1 / 2;
+            display: flex;
+            flex-direction: column;
+        }
+        .palette-panel {
+            grid-column: 2 / 3;
+            border-left: 1px solid #e5e7eb;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        .palette-btn {
+            width: 45px;
+            height: 45px;
+            transition: all 0.2s ease;
+        }
+        .palette-btn:hover {
+            transform: scale(1.1);
+            background-color: #dbeafe;
+        }
+        .palette-btn.answered {
+            background-color: #10b981;
+            color: white;
+        }
+        .palette-btn.current {
+            background-color: #3b82f6;
+            color: white;
+            border: 2px solid #1e40af;
+        }
+        .option-btn {
+            transition: all 0.3s ease;
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-color: #60a5fa;
+        }
+        .correct { background-color: #d1fae5 !important; border-color: #10b981 !important; }
+        .incorrect { background-color: #fee2e2 !important; border-color: #ef4444 !important; }
+        .explanation-box { background-color: #f0f9ff; border-left: 4px solid #38bdf8; }
+        .nav-btn:disabled { background-color: #9ca3af; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <div id="main-container" class="main-container p-4">
+
+        <!-- Registration/Login Screen -->
+        <div id="auth-screen" class="auth-card w-full max-w-md p-8 space-y-6">
+            <h2 id="auth-title" class="text-3xl font-bold text-center text-gray-900">રજીસ્ટ્રેશન</h2>
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">ઈમેલ</label>
+                    <input type="email" id="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">પાસવર્ડ</label>
+                    <input type="password" id="password" required minlength="6" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div id="confirm-password-field">
+                    <label for="confirm-password" class="block text-sm font-medium text-gray-700">પાસવર્ડ કન્ફર્મ કરો</label>
+                    <input type="password" id="confirm-password" required minlength="6" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div id="captcha-field">
+                    <label for="captcha" class="block text-sm font-medium text-gray-700">
+                        <span id="captcha-question"></span>
+                    </label>
+                    <input type="number" id="captcha" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <p id="auth-error" class="text-red-500 text-sm"></p>
+                <button type="submit" id="auth-submit-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">રજીસ્ટર કરો</button>
+            </form>
+            <p class="text-center text-sm">
+                <a href="#" id="auth-toggle-link" class="font-medium text-indigo-600 hover:text-indigo-500">પહેલેથી જ એકાઉન્ટ છે? લોગઇન કરો</a>
+            </p>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="quiz-card quiz-grid hidden">
+            <!-- Question Panel -->
+            <div class="question-panel p-4">
+                <div class="flex-grow overflow-y-auto pr-4">
+                    <h2 id="question-header" class="text-2xl font-bold text-gray-800 mb-4"></h2>
+                    <p id="question-text" class="text-lg text-gray-700 mb-6"></p>
+                    <div id="options-container" class="space-y-4"></div>
+                    <div id="explanation-box" class="explanation-box p-4 mt-6 rounded-md hidden">
+                        <h3 class="font-bold text-lg text-sky-800">સમજૂતી:</h3>
+                        <p id="explanation-text" class="mt-2 text-gray-700"></p>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center pt-4 border-t mt-4">
+                    <button id="prev-btn" class="nav-btn font-bold py-2 px-6 rounded-lg bg-gray-600 hover:bg-gray-700">પાછલો પ્રશ્ન</button>
+                    <div id="score-display" class="font-bold text-lg">સ્કોર: 0</div>
+                    <button id="next-btn" class="nav-btn font-bold py-2 px-6 rounded-lg bg-indigo-600 hover:bg-indigo-700">આગળનો પ્રશ્ન</button>
+                </div>
+            </div>
+            <!-- Question Palette Panel -->
+            <div class="palette-panel">
+                <h3 class="text-lg font-bold mb-4 text-center">પ્રશ્ન પેનલ</h3>
+                <div id="question-palette" class="grid grid-cols-4 gap-3"></div>
+                 <div class="mt-6 space-y-2 text-sm">
+                    <div class="flex items-center"><div class="w-4 h-4 rounded-full bg-white border-2 border-gray-400 mr-2"></div> વણઉકેલાયેલ</div>
+                    <div class="flex items-center"><div class="w-4 h-4 rounded-full bg-green-500 mr-2"></div> ઉકેલાયેલ</div>
+                    <div class="flex items-center"><div class="w-4 h-4 rounded-full bg-blue-500 border-2 border-blue-800 mr-2"></div> વર્તમાન</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Result Screen -->
+        <div id="result-screen" class="auth-card w-full max-w-md p-8 space-y-6 hidden">
+             <h2 class="text-3xl font-bold text-center text-gray-900">ક્વિઝ પૂર્ણ!</h2>
+             <p class="text-xl text-center">તમારો અંતિમ સ્કોર:</p>
+             <p id="final-score" class="text-5xl font-bold text-center text-indigo-600"></p>
+             <button id="restart-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">ફરીથી રમો</button>
+        </div>
+
+    </div>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBMj4hWejJBluFqH7QgzmyAR2X75cWPhVs",
+            authDomain: "jpmusic-fe07f.firebaseapp.com",
+            projectId: "jpmusic-fe07f",
+            storageBucket: "jpmusic-fe07f.appspot.com",
+            messagingSenderId: "643212893364",
+            appId: "1:643212893364:web:c1eff668dde3cd38270be1"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Quiz Data
+        const quizData = [
+            { question: "૧. હરિજનો માટે અલગ મતદાર મંડળની વ્યવસ્થાને કયા કરારમાં અનામત બેઠકોથી બદલી દેવામાં આવી હતી?", options: ["લખનઉ કરાર", "પૂના કરાર", "ગાંધી-ઇરવિન કરાર", "શિમલા કરાર"], answer: "પૂના કરાર", explanation: "1932માં ગાંધીજી અને આંબેડકર વચ્ચે થયેલા પૂના કરારમાં અલગ મતદાર મંડળને બદલે પ્રાંતીય ધારાસભાઓમાં દલિત વર્ગો માટે બેઠકો અનામત રાખવા પર સહમતિ બની." },
+            { question: "૨. પૂના કરાર મહાત્મા ગાંધી અને કોની વચ્ચે થયો હતો?", options: ["મોહમ્મદ અલી ઝીણા", "જવાહરલાલ નેહરુ", "ડૉ. બી. આર. આંબેડકર", "લોર્ડ ઇરવિન"], answer: "ડૉ. બી. આર. આંબેડકર", explanation: "આ કરાર 24 સપ્ટેમ્બર 1932ના રોજ પુણેની યરવડા જેલમાં મહાત્મા ગાંધી અને દલિત વર્ગોના પ્રતિનિધિ તરીકે ડૉ. બાબાસાહેબ આંબેડકર વચ્ચે થયો હતો." },
+            { question: "૩. પૂના કરાર શેની સાથે સંબંધિત હતો?", options: ["શૈક્ષણિક સુધારા", "હિન્દુ-મુસ્લિમ એકતા", "પછાત વર્ગો માટે ચૂંટણી બેઠકોનું આરક્ષણ", "બંધારણીય સુધારા"], answer: "પછાત વર્ગો માટે ચૂંટણી બેઠકોનું આરક્ષણ", explanation: "આ કરારમાં દલિતો માટે બ્રિટિશ સરકાર દ્વારા પ્રસ્તાવિત અલગ મતદાર મંડળના બદલે સંયુક્ત મતદાર મંડળ હેઠળ અનામત બેઠકોની વ્યવસ્થા કરવામાં આવી." },
+            { question: "૪. પૂના કરાર પર ક્યારે હસ્તાક્ષર થયા હતા?", options: ["1930", "1931", "1932", "1933"], answer: "1932", explanation: "આ ઐતિહાસિક કરાર 24 સપ્ટેમ્બર 1932ના રોજ પુણેની યરવડા જેલમાં થયો હતો." },
+            { question: "૫. આઝાદ હિંદ રેડિયો સેવાની શરૂઆત જર્મનીમાં કયા વર્ષે થઈ હતી?", options: ["1940", "1941", "1942", "1943"], answer: "1942", explanation: "સુભાષચંદ્ર બોઝે બ્રિટિશ સરકાર વિરુદ્ધ પ્રચાર માટે 1942માં જર્મનીના બર્લિન શહેરથી આઝાદ હિંદ રેડિયોની શરૂઆત કરી હતી." },
+            { question: "૬. કટક શહેર કયા પ્રસિદ્ધ સ્વાતંત્ર્ય સેનાનીના જન્મસ્થળ તરીકે જાણીતું છે?", options: ["સરદાર પટેલ", "જવાહરલાલ નેહરુ", "સુભાષચંદ્ર બોઝ", "બાલ ગંગાધર તિલક"], answer: "સુભાષચંદ્ર બોઝ", explanation: "નેતાજી સુભાષચંદ્ર બોઝનો જન્મ 23 જાન્યુઆરી 1897ના રોજ ઓડિશાના કટક શહેરમાં થયો હતો." },
+            { question: "૭. સુભાષચંદ્ર બોઝ પ્રથમ વખત કોંગ્રેસના અધ્યક્ષ કયા વર્ષે બન્યા હતા?", options: ["1929", "1935", "1938", "1939"], answer: "1938", explanation: "1938માં ગુજરાતના હરિપુરા ખાતે યોજાયેલા કોંગ્રેસના અધિવેશનમાં સુભાષચંદ્ર બોઝ સર્વાનુમતે અધ્યક્ષ તરીકે ચૂંટાયા હતા." },
+            { question: "૮. આઝાદ હિંદની अस्थायी સરકારની સ્થાપના કોણે કરી હતી?", options: ["રાસબિહારી બોઝ", "કેપ્ટન મોહન સિંહ", "સુભાષચંદ્ર બોઝ", "શાહ નવાઝ ખાન"], answer: "સુભાષચંદ્ર બોઝ", explanation: "21 ઓક્ટોબર 1943ના રોજ નેતાજી સુભાષચંદ્ર બોઝે સિંગાપોરમાં 'આર્ઝી હુકુમત-એ-આઝાદ હિંદ' એટલે કે સ્વતંત્ર ભારતની अस्थायी સરકારની સ્થાપનાની ઘોષણા કરી હતી." },
+            { question: "૯. આઝાદ હિંદ ફોજની સ્થાપનાનો વિચાર સૌપ્રથમ કોને આવ્યો હતો?", options: ["સુભાષચંદ્ર બોઝ", "રાસબિહારી બોઝ", "મોહન સિંહ", "શાહ નવાઝ ખાન"], answer: "મોહન સિંહ", explanation: "મલાયામાં બ્રિટિશ ભારતીય સેનાના કેપ્ટન મોહન સિંહને જાપાનીઓની મદદથી ભારતીય યુદ્ધ કેદીઓને લઈને આઝાદ હિંદ ફોજ બનાવવાનો વિચાર સૌપ્રથમ આવ્યો હતો." },
+            { question: "૧૦. ફોરવર્ડ બ્લોક પાર્ટીની સ્થાપના કોણે કરી હતી?", options: ["જવાહરલાલ નેહરુ", "સરદાર પટેલ", "સુભાષચંદ્ર બોઝ", "આચાર્ય કૃપલાણી"], answer: "સુભાષચંદ્ર બોઝ", explanation: "1939માં કોંગ્રેસના અધ્યક્ષ પદેથી રાજીનામું આપ્યા બાદ સુભાષચંદ્ર બોઝે કોંગ્રેસની અંદર જ એક પ્રગતિશીલ જૂથ તરીકે 'ફોરવર્ડ બ્લોક'ની સ્થાપના કરી." },
+            { question: "૧૧. ઇન્ડિયન નેશનલ આર્મી (INA) ની સ્થાપના કોણે કરી હતી?", options: ["સુભાષચંદ્ર બોઝ", "રાસબિહારી બોઝ", "મોહન સિંહ", "શાહ નવાઝ ખાન"], answer: "મોહન સિંહ", explanation: "1942માં કેપ્ટન મોહન સિંહે દક્ષિણ-પૂર્વ એશિયામાં જાપાનીઓ દ્વારા પકડાયેલા ભારતીય યુદ્ધ કેદીઓની મદદથી INAની પ્રથમ ડિવિઝનની રચના કરી." },
+            { question: "૧૨. આઝાદ હિંદ ફોજનું ગઠન કયા વર્ષે થયું હતું?", options: ["1940", "1941", "1942", "1943"], answer: "1942", explanation: "INAનું ગઠન ઔપચારિક રીતે સપ્ટેમ્બર 1942માં કરવામાં આવ્યું હતું, જોકે પાછળથી સુભાષચંદ્ર બોઝના નેતૃત્વ હેઠળ તેનું પુનર્ગઠન થયું." },
+            { question: "૧૩. INA દ્વારા આંદામાન-નિકોબાર દ્વીપને શું નામ આપવામાં આવ્યું હતું?", options: ["સ્વતંત્ર અને સ્વરાજ દ્વીપ", "શહીદ અને સ્વરાજ દ્વીપ", "આઝાદ અને હિંદ દ્વીપ", "ક્રાંતિ અને બલિદાન દ્વીપ"], answer: "શહીદ અને સ્વરાજ દ્વીપ", explanation: "નેતાજીએ આંદામાન દ્વીપને 'શહીદ દ્વીપ' અને નિકોબાર દ્વીપને 'સ્વરાજ દ્વીપ' નામ આપ્યું હતું." },
+            { question: "૧૪. સુભાષચંદ્ર બોઝના પિતાનું નામ શું હતું?", options: ["શરતચંદ્ર બોઝ", "જાનકીનાથ બોઝ", "સત્યેન્દ્રનાથ બોઝ", "દેવેન્દ્રનાથ બોઝ"], answer: "જાનકીનાથ બોઝ", explanation: "સુભાષચંદ્ર બોઝના પિતા જાનકીનાથ બોઝ ઓડિશાના કટક શહેરના એક પ્રસિદ્ધ અને સફળ વકીલ હતા." },
+            { question: "૧૫. ક્રિપ્સ મિશનને 1942માં ભારત મોકલનાર બ્રિટિશ વડાપ્રધાન કોણ હતા?", options: ["ક્લીમેન્ટ એટલી", "નેવિલ ચેમ્બરલેન", "વિન્સ્ટન ચર્ચિલ", "લોર્ડ હેલિફેક્સ"], answer: "વિન્સ્ટન ચર્ચિલ", explanation: "દ્વિતીય વિશ્વયુદ્ધમાં ભારતનું સમર્થન મેળવવા માટે બ્રિટિશ વડાપ્રધાન વિન્સ્ટન ચર્ચિલે માર્ચ 1942માં સર સ્ટેફોર્ડ ક્રિપ્સના નેતૃત્વમાં એક મિશન ભારત મોકલ્યું." },
+            { question: "૧૬. કોંગ્રેસ કારોબારી સમિતિએ 'ભારત છોડો' પ્રસ્તાવ જુલાઈ 1942માં ક્યાં પસાર કર્યો હતો?", options: ["મુંબઈ", "દિલ્હી", "વર્ધા", "પુણે"], answer: "વર્ધા", explanation: "14 જુલાઈ 1942ના રોજ મહારાષ્ટ્રના વર્ધા ખાતે મળેલી કોંગ્રેસ કારોબારી સમિતિની બેઠકમાં 'ભારત છોડો' આંદોલનનો પ્રસ્તાવ સ્વીકારવામાં આવ્યો." },
+            { question: "૧૭. અખિલ ભારતીય કોંગ્રેસ સમિતિએ 'ભારત છોડો' પ્રસ્તાવ ક્યારે પસાર કર્યો હતો?", options: ["14 જુલાઈ 1942", "8 ઓગસ્ટ 1942", "9 ઓગસ્ટ 1942", "15 ઓગસ્ટ 1942"], answer: "8 ઓગસ્ટ 1942", explanation: "8 ઓગસ્ટ 1942ના રોજ બોમ્બેના ગ્વાલિયા ટેન્ક મેદાનમાં અખિલ ભારતીય કોંગ્રેસ સમિતિએ 'ભારત છોડો' પ્રસ્તાવને બહાલી આપી, જ્યાં ગાંધીજીએ 'કરેંગે યા મરેંગે'નું સૂત્ર આપ્યું." },
+            { question: "૧૮. ભારત છોડો આંદોલન કયા વર્ષે શરૂ થયું હતું?", options: ["1930", "1939", "1942", "1945"], answer: "1942", explanation: "9 ઓગસ્ટ 1942ની સવારથી ક્રિપ્સ મિશનની નિષ્ફળતા બાદ અને ગાંધીજીના આહ્વાન પર દેશવ્યાપી ભારત છોડો આંદોલનની શરૂઆત થઈ." },
+            { question: "૧૯. કયા આંદોલનને 'ઓગસ્ટ ક્રાંતિ' તરીકે પણ ઓળખવામાં આવે છે?", options: ["અસહકાર આંદોલન", "સવિનય કાનૂનભંગ", "ભારત છોડો આંદોલન", "સ્વદેશી આંદોલન"], answer: "ભારત છોડો આંદોલન", explanation: "ભારત છોડો આંદોલન ઓગસ્ટ મહિનામાં શરૂ થયું હોવાથી તેને 'ઓગસ્ટ ક્રાંતિ' તરીકે પણ ઓળખવામાં આવે છે." },
+            { question: "૨૦. જ્યારે કેબિનેટ મિશન ભારત આવ્યું ત્યારે ઈંગ્લેન્ડમાં કઈ પાર્ટી સત્તામાં હતી?", options: ["કન્ઝર્વેટિવ પાર્ટી", "લિબરલ પાર્ટી", "લેબર પાર્ટી", "કોમ્યુનિસ્ટ પાર્ટી"], answer: "લેબર પાર્ટી", explanation: "1946માં જ્યારે કેબિનેટ મિશન ભારત આવ્યું ત્યારે ઈંગ્લેન્ડમાં ક્લીમેન્ટ એટલીના નેતૃત્વ હેઠળ લેબર પાર્ટીની સરકાર હતી, જે ભારતની આઝાદી પ્રત્યે સહાનુભૂતિ ધરાવતી હતી." },
+            { question: "૨૧. 1946માં ભારત આવેલા કેબિનેટ મિશનમાં કેટલા સભ્યો હતા?", options: ["એક", "બે", "ત્રણ", "ચાર"], answer: "ત્રણ", explanation: "કેબિનેટ મિશનમાં બ્રિટિશ સરકારના ત્રણ કેબિનેટ મંત્રીઓ હતા: લોર્ડ પેથિક-લોરેન્સ (ભારત સચિવ), સર સ્ટેફોર્ડ ક્રિપ્સ (વેપાર બોર્ડના પ્રમુખ), અને એ.વી. એલેક્ઝાન્ડર (નૌકાદળના વડા)." },
+            { question: "૨૨. 20 ફેબ્રુઆરી 1947ના રોજ કોણે જાહેરાત કરી હતી કે જૂન 1948 સુધીમાં ભારતને સત્તા સોંપવામાં આવશે?", options: ["વિન્સ્ટન ચર્ચિલ", "લોર્ડ માઉન્ટબેટન", "ક્લીમેન્ટ એટલી", "લોર્ડ વેવેલ"], answer: "ક્લીમેન્ટ એટલી", explanation: "બ્રિટિશ વડાપ્રધાન ક્લીમેન્ટ એટલીએ 20 ફેબ્રુઆરી 1947ના રોજ હાઉસ ઓફ કોમન્સમાં જાહેરાત કરી કે બ્રિટિશ સરકાર જૂન 1948 પહેલા ભારતીયોને સત્તા સોંપી દેશે." },
+            { question: "૨૩. 15 ઓગસ્ટ 1947ના રોજ સ્વતંત્રતાના દિવસે મહાત્મા ગાંધી ક્યાં હતા?", options: ["દિલ્હી", "મુંબઈ", "કલકત્તા", "સાબરમતી"], answer: "કલકત્તા", explanation: "ગાંધીજી તે દિવસે દિલ્હીના સ્વતંત્રતા સમારોહથી દૂર, કોલકાતામાં ભાગલાને કારણે ફાટી નીકળેલી સાંપ્રદાયિક હિંસાને શાંત કરવા માટે ઉપવાસ અને પ્રાર્થના કરી રહ્યા હતા." },
+            { question: "૨૪. ભારતનું વિભાજન કરવાની જાહેરાત કઈ તારીખે કરવામાં આવી હતી?", options: ["20 ફેબ્રુઆરી 1947", "3 જૂન 1947", "14 ઓગસ્ટ 1947", "26 જાન્યુઆરી 1950"], answer: "3 જૂન 1947", explanation: "ભારતના છેલ્લા વાઇસરોય લોર્ડ માઉન્ટબેટને 3 જૂન 1947ના રોજ ભારત અને પાકિસ્તાન એમ બે દેશોમાં ભારતના વિભાજનની યોજનાની જાહેરાત કરી, જે 'માઉન્ટબેટન યોજના' તરીકે ઓળખાય છે." },
+            { question: "૨૫. ભારત કયા દિવસે એક સાર્વભૌમ ગણરાજ્ય બન્યું?", options: ["15 ઓગસ્ટ 1947", "26 નવેમ્બર 1949", "26 જાન્યુઆરી 1950", "3 જૂન 1947"], answer: "26 જાન્યુઆરી 1950", explanation: "26 જાન્યુઆરી 1950ના રોજ ભારતનું બંધારણ સંપૂર્ણ રીતે લાગુ થયું, અને ભારત બ્રિટિશ ડોમિનિયનમાંથી એક સંપૂર્ણ સાર્વભૌમ ગણરાજ્ય બન્યું. આ દિવસને ગણતંત્ર દિવસ તરીકે ઉજવવામાં આવે છે." },
+            { question: "૨૬. વાઇસરોયની કાર્યકારી પરિષદમાં સામેલ થનાર પ્રથમ ભારતીય કોણ હતા?", options: ["દાદાભાઈ નૌરોજી", "સત્યેન્દ્ર પ્રસન્ના સિન્હા", "મોતીલાલ નેહરુ", "તેજ બહાદુર સપ્રુ"], answer: "સત્યેન્દ્ર પ્રસન્ના સિન્હા", explanation: "1909ના માર્લે-મિન્ટો સુધારા હેઠળ, સત્યેન્દ્ર પ્રસન્ના સિન્હા વાઇસરોયની કાર્યકારી પરિષદમાં કાયદા સભ્ય તરીકે નિયુક્ત થનારા પ્રથમ ભારતીય બન્યા." },
+            { question: "૨૭. મુસ્લિમો માટે અલગ મતદાર મંડળની વ્યવસ્થા કયા સુધારા દ્વારા કરવામાં આવી?", options: ["મોન્ટેગ્યુ-ચેમ્સફોર્ડ સુધારા", "માર્લે-મિન્ટો સુધારા", "ભારત સરકાર અધિનિયમ, 1935", "સાયમન કમિશન"], answer: "માર્લે-મિન્ટો સુધારા", explanation: "1909ના માર્લે-મિન્ટો સુધારાએ ભારતમાં સાંપ્રદાયિક પ્રતિનિધિત્વની શરૂઆત કરી અને મુસ્લિમોને અલગ મતદાર મંડળની સુવિધા આપી, જેણે ભાગલાના બીજ રોપ્યા." },
+            { question: "૨૮. 'ખાલસા નીતિ' (Doctrine of Lapse) કયા ગવર્નર જનરલે લાગુ કરી હતી?", options: ["લોર્ડ વેલેસ્લી", "લોર્ડ હેસ્ટિંગ્સ", "લોર્ડ ડેલહાઉઝી", "લોર્ડ વિલિયમ બેન્ટિંક"], answer: "લોર્ડ ડેલહાઉઝી", explanation: "લોર્ડ ડેલહાઉઝીએ આ નીતિ હેઠળ દત્તક પુત્રને ઉત્તરાધિકારનો અધિકાર નકારીને સતારા, ઝાંસી, નાગપુર જેવા અનેક ભારતીય રાજ્યોને બ્રિટિશ સામ્રાજ્યમાં ભેળવી દીધા." },
+            { question: "૨૯. ભારતમાં સાંપ્રદાયિક મતવિસ્તારના જનક કોને કહેવામાં આવે છે?", options: ["લોર્ડ કર્ઝન", "લોર્ડ ડેલહાઉઝી", "લોર્ડ મિન્ટો", "લોર્ડ ચેમ્સફોર્ડ"], answer: "લોર્ડ મિન્ટો", explanation: "1909ના માર્લે-મિન્ટો સુધારા હેઠળ ભારતમાં સૌપ્રથમ વખત ધર્મના આધારે મુસ્લિમો માટે અલગ મતદાર મંડળની વ્યવસ્થા કરવામાં આવી, તેથી વાઇસરોય લોર્ડ મિન્ટોને સાંપ્રદાયિક મતવિસ્તારના જનક કહેવામાં આવે છે." },
+            { question: "૩૦. સ્વતંત્ર ભારતના પ્રથમ ગવર્નર જનરલ કોણ હતા?", options: ["સી. રાજગોપાલાચારી", "ડૉ. રાજેન્દ્ર પ્રસાદ", "લોર્ડ માઉન્ટબેટન", "જવાહરલાલ નેહરુ"], answer: "લોર્ડ માઉન્ટબેટન", explanation: "ભારત 15 ઓગસ્ટ 1947ના રોજ આઝાદ થયું ત્યારે લોર્ડ માઉન્ટબેટન ભારતના અંતિમ વાઇસરોય હતા અને તેમને સ્વતંત્ર ભારતના પ્રથમ ગવર્નર જનરલ તરીકે ચાલુ રાખવામાં આવ્યા." },
+            { question: "૩૧. ભારતમાં 'સ્થાનિક સ્વશાસનના પિતા' તરીકે કોણ ઓળખાય છે?", options: ["લોર્ડ મેયો", "લોર્ડ રિપન", "લોર્ડ લિટન", "લોર્ડ ડફરિન"], answer: "લોર્ડ રિપન", explanation: "વાઇસરોય લોર્ડ રિપને 1882માં સ્થાનિક સ્વશાસન સંસ્થાઓ (મ્યુનિસિપાલિટી અને જિલ્લા બોર્ડ) ની સ્થાપના અને વિકાસ માટે મહત્વપૂર્ણ પગલાં લીધા, જેના કારણે તેમને 'સ્થાનિક સ્વશાસનના પિતા' કહેવામાં આવે છે." },
+            { question: "૩૨. 'ભારતીય રેલવેના જનક' કોને કહેવામાં આવે છે?", options: ["લોર્ડ કર્ઝન", "લોર્ડ રિપન", "લોર્ડ કેનિંગ", "લોર્ડ ડેલહાઉઝી"], answer: "લોર્ડ ડેલહાઉઝી", explanation: "લોર્ડ ડેલહાઉઝીના કાર્યકાળ દરમિયાન 1853માં મુંબઈથી થાણે વચ્ચે પ્રથમ રેલવે લાઇન શરૂ થઈ, તેથી તેમને ભારતીય રેલવેના જનક માનવામાં આવે છે." },
+            { question: "૩૩. સ્વતંત્ર ભારતના અંતિમ ગવર્નર જનરલ કોણ હતા?", options: ["લોર્ડ માઉન્ટબેટન", "ડૉ. રાજેન્દ્ર પ્રસાદ", "જવાહરલાલ નેહરુ", "ચક્રવર્તી રાજગોપાલાચારી"], answer: "ચક્રવર્તી રાજગોપાલાચારી", explanation: "લોર્ડ માઉન્ટબેટન પછી, સી. રાજગોપાલાચારી (રાજાજી) જૂન 1948માં ગવર્નર જનરલ બન્યા. તેઓ આ પદ સંભાળનાર પ્રથમ અને અંતિમ ભારતીય હતા. 1950માં બંધારણ લાગુ થતા આ પદ સમાપ્ત થયું." },
+            { question: "૩૪. ઇલ્બર્ટ બિલ વિવાદ કયા વાઇસરોયના સમયમાં થયો હતો?", options: ["લોર્ડ લિટન", "લોર્ડ ડફરિન", "લોર્ડ રિપન", "લોર્ડ કર્ઝન"], answer: "લોર્ડ રિપન", explanation: "1883માં લોર્ડ રિપનના સમયમાં ઇલ્બર્ટ બિલ રજૂ થયું, જેમાં ભારતીય ન્યાયાધીશોને યુરોપિયન આરોપીઓ પર કેસ ચલાવવાનો અધિકાર આપવાની જોગવાઈ હતી. યુરોપિયનોના ઉગ્ર વિરોધને કારણે આ બિલ પાછું ખેંચવું પડ્યું." },
+            { question: "૩૫. ભારતનો પ્રથમ વાઇસરોય કોણ હતો?", options: ["લોર્ડ ડેલહાઉઝી", "લોર્ડ કેનિંગ", "લોર્ડ વિલિયમ બેન્ટિંક", "વોરન હેસ્ટિંગ્સ"], answer: "લોર્ડ કેનિંગ", explanation: "1857ના વિપ્લવ પછી, 1858ના ભારત સરકાર અધિનિયમ હેઠળ, ગવર્નર-જનરલના પદને વાઇસરોય તરીકે પણ ઓળખવામાં આવ્યું. લોર્ડ કેનિંગ ભારતના અંતિમ ગવર્નર-જનરલ અને પ્રથમ વાઇસરોય બન્યા." },
+            { question: "૩૬. ભારતમાં નાગરિક સેવાઓના જનક (Father of Civil Services) કોને માનવામાં આવે છે?", options: ["વોરન હેસ્ટિંગ્સ", "લોર્ડ વિલિયમ બેન્ટિંક", "ચાર્લ્સ કોર્નવોલિસ", "લોર્ડ ડેલહાઉઝી"], answer: "ચાર્લ્સ કોર્નવોલિસ", explanation: "લોર્ડ કોર્નવોલિસે ભારતમાં ભ્રષ્ટાચાર દૂર કરવા અને વહીવટને સુવ્યવસ્થિત કરવા માટે નાગરિક સેવાઓમાં વ્યાપક સુધારા કર્યા, તેથી તેમને 'ભારતીય નાગરિક સેવાઓના જનક' કહેવામાં આવે છે." },
+            { question: "૩૭. 1937ના પ્રાંતીય ચૂંટણીઓમાં પંજાબમાં કઈ પાર્ટીએ સરકાર બનાવી?", options: ["કોંગ્રેસ", "મુસ્લિમ લીગ", "યુનિયનિસ્ટ પાર્ટી", "અકાલી દળ"], answer: "યુનિયનિસ્ટ પાર્ટી", explanation: "1937ની ચૂંટણીમાં પંજાબમાં કોંગ્રેસને બહુમતી ન મળી. ત્યાં સિકંદર હયાત ખાનના નેતૃત્વ હેઠળ યુનિયનિસ્ટ પાર્ટીએ મુસ્લિમ લીગ સાથે મળીને ગઠબંધન સરકાર બનાવી." },
+            { question: "૩૮. ભારત સરકાર અધિનિયમ, 1935 કયા સિદ્ધાંત પર આધારિત હતો?", options: ["એકાત્મક શાસન", "પ્રમુખશાહી પ્રણાલી", "સંઘીય અને સંસદીય પ્રણાલી", "સામ્યવાદી શાસન"], answer: "સંઘીય અને સંસદીય પ્રણાલી", explanation: "આ અધિનિયમે એક અખિલ ભારતીય સંઘની સ્થાપના અને પ્રાંતોમાં જવાબદાર સંસદીય સરકારની જોગવાઈ કરી હતી, જે ભારતના વર્તમાન બંધારણનો મુખ્ય આધાર બન્યો." },
+            { question: "૩૯. કયા અધિનિયમે ઈસ્ટ ઈન્ડિયા કંપનીનો ભારતમાં વેપારનો એકાધિકાર (ચા અને ચીન સિવાય) સમાપ્ત કર્યો?", options: ["1773નો રેગ્યુલેટિંગ એક્ટ", "1813નો ચાર્ટર એક્ટ", "1833નો ચાર્ટર એક્ટ", "1853નો ચાર્ટર એક્ટ"], answer: "1813નો ચાર્ટર એક્ટ", explanation: "1813ના ચાર્ટર એક્ટે ચા અને ચીન સાથેના વેપાર સિવાય અન્ય તમામ ક્ષેત્રોમાં ઈસ્ટ ઈન્ડિયા કંપનીનો વેપારિક એકાધિકાર સમાપ્ત કર્યો અને અન્ય બ્રિટિશ વેપારીઓ માટે ભારતના દરવાજા ખોલી દીધા." },
+            { question: "૪૦. અવધને 'એક ચેરી જે એક દિવસ આપણા મોંમાં આવીને પડશે' એમ કોણે કહ્યું હતું?", options: ["લોર્ડ વેલેસ્લી", "લોર્ડ વિલિયમ બેન્ટિંક", "લોર્ડ ડેલહાઉઝી", "લોર્ડ કેનિંગ"], answer: "લોર્ડ ડેલહાઉઝી", explanation: "1851માં વાઇસરોય લોર્ડ ડેલહાઉઝીએ અવધ રાજ્યના વિલીનીકરણની અનિવાર્યતા દર્શાવતા આ ટિપ્પણી કરી હતી." },
+            { question: "૪૧. 1829માં સતી પ્રથા નાબૂદીનો કાયદો કયા ગવર્નર જનરલના સમયમાં પસાર થયો?", options: ["લોર્ડ હેસ્ટિંગ્સ", "લોર્ડ એમહર્સ્ટ", "લોર્ડ વિલિયમ બેન્ટિંક", "લોર્ડ ઓકલેન્ડ"], answer: "લોર્ડ વિલિયમ બેન્ટિંક", explanation: "રાજા રામ મોહન રોય જેવા સમાજ સુધારકોના પ્રયાસોથી પ્રભાવિત થઈને, ગવર્નર-જનરલ લોર્ડ વિલિયમ બેન્ટિંકે 1829માં સતી પ્રથાને ગેરકાયદેસર અને દંડનીય અપરાધ જાહેર કરતો કાયદો પસાર કર્યો." },
+            { question: "૪૨. ભારતનો પ્રથમ મહાસર્વેક્ષક જનરલ કોને નિયુક્ત કરવામાં આવ્યો હતો?", options: ["વિલિયમ લેમ્બટન", "જ્યોર્જ એવરેસ્ટ", "કોલિન મેકેન્ઝી", "હેનરી લોરેન્સ"], answer: "કોલિન મેકેન્ઝી", explanation: "કોલિન મેકેન્ઝીને 1815માં ભારતના પ્રથમ મહાસર્વેક્ષક જનરલ તરીકે નિયુક્ત કરવામાં આવ્યા હતા, જેમણે ભારતના નકશા તૈયાર કરવામાં મહત્વપૂર્ણ ભૂમિકા ભજવી હતી." },
+            { question: "૪૩. લોર્ડ માઉન્ટબેટન પછી ભારતના ગવર્નર જનરલ કોણ બન્યા?", options: ["ડૉ. રાજેન્દ્ર પ્રસાદ", "જવાહરલાલ નેહરુ", "સરદાર પટેલ", "સી. રાજગોપાલાચારી"], answer: "સી. રાજગોપાલાચારી", explanation: "જૂન 1948માં લોર્ડ માઉન્ટબેટનના ગયા પછી, ચક્રવર્તી રાજગોપાલાચારી સ્વતંત્ર ભારતના પ્રથમ ભારતીય ગવર્નર જનરલ બન્યા." },
+            { question: "૪૪. કાયમી જમાબંધી લાગુ થવાના સમયે બંગાળના ગવર્નર જનરલ કોણ હતા?", options: ["વોરન હેસ્ટિંગ્સ", "સર જ્હોન શોર", "ચાર્લ્સ કોર્નવોલિસ", "લોર્ડ વેલેસ્લી"], answer: "ચાર્લ્સ કોર્નવોલિસ", explanation: "1793માં લોર્ડ કોર્નવોલિસે બંગાળ, બિહાર અને ઓડિશામાં કાયમી જમાબંધી નામની મહેસૂલ પ્રણાલી લાગુ કરી હતી." },
+            { question: "૪૫. 'પેરામાઉન્ટસી' ની નીતિ કોણે શરૂ કરી હતી?", options: ["લોર્ડ વેલેસ્લી", "લોર્ડ મિન્ટો", "લોર્ડ હેસ્ટિંગ્સ", "લોર્ડ એમહર્સ્ટ"], answer: "લોર્ડ હેસ્ટિંગ્સ", explanation: "ગવર્નર-જનરલ લોર્ડ હેસ્ટિંગ્સે (1813-1823) 'પેરામાઉન્ટસી' ની નીતિ શરૂ કરી, જે મુજબ કંપનીનો દાવો હતો કે તેની સત્તા સર્વોચ્ચ છે અને તેથી તે કોઈપણ ભારતીય રાજ્ય પર નિયંત્રણ કરી શકે છે." },
+            { question: "૪૬. બ્રિટિશ શાસનમાં અંતિમ ગવર્નર જનરલ અને પ્રથમ વાઇસરોય કોણ હતો?", options: ["લોર્ડ ડેલહાઉઝી", "લોર્ડ કેનિંગ", "લોર્ડ એલ્ગિન", "લોર્ડ લોરેન્સ"], answer: "લોર્ડ કેનિંગ", explanation: "લોર્ડ કેનિંગ 1857ના વિપ્લવ સમયે ગવર્નર જનરલ હતા. 1858ના અધિનિયમ પછી, તેઓ ભારતના પ્રથમ વાઇસરોય બન્યા." },
+            { question: "૪૭. બંધારણ સભાની રચના કઈ યોજના હેઠળ થઈ હતી?", options: ["ક્રિપ્સ મિશન", "વેવેલ યોજના", "કેબિનેટ મિશન યોજના", "માઉન્ટબેટન યોજના"], answer: "કેબિનેટ મિશન યોજના", explanation: "1946ની કેબિનેટ મિશન યોજનાની ભલામણોના આધારે ભારતીય બંધારણ ઘડવા માટે બંધારણ સભાની રચના કરવામાં આવી હતી." },
+            { question: "૪૮. 1909ના માર્લે-મિન્ટો સુધારાનો મુખ્ય ઉદ્દેશ્ય શું હતો?", options: ["પ્રાંતીય સ્વાયત્તતા", "જવાબદાર સરકાર", "મુસ્લિમો માટે અલગ મતદાર મંડળ", "દ્વિશાસન પ્રણાલી"], answer: "મુસ્લિમો માટે અલગ મતદાર મંડળ", explanation: "આ સુધારાએ મુસ્લિમો માટે અલગ મતદાર મંડળની જોગવાઈ કરીને ભારતમાં સાંપ્રદાયિક વિભાજનના બીજ વાવ્યા." },
+            { question: "૪૯. 1919ના ભારત સરકાર અધિનિયમને અન્ય કયા નામે ઓળખવામાં આવે છે?", options: ["માર્લે-મિન્ટો સુધારા", "મોન્ટેગ્યુ-ચેમ્સફોર્ડ સુધારા", "નેહરુ રિપોર્ટ", "રામસે મેકડોનાલ્ડ એવોર્ડ"], answer: "મોન્ટેગ્યુ-ચેમ્સફોર્ડ સુધારા", explanation: "આ અધિનિયમ તત્કાલીન ભારત સચિવ એડવિન મોન્ટેગ્યુ અને વાઇસરોય લોર્ડ ચેમ્સફોર્ડની ભલામણો પર આધારિત હતો, તેથી તેને મોન્ટેગ્યુ-ચેમ્સફોર્ડ સુધારા તરીકે પણ ઓળખવામાં આવે છે." },
+            { question: "૫૦. કયા અધિનિયમ દ્વારા પ્રાંતોમાં દ્વિશાસન પ્રણાલી સમાપ્ત કરીને કેન્દ્રમાં લાગુ કરવામાં આવી?", options: ["1909નો અધિનિયમ", "1919નો અધિનિયમ", "1935નો અધિનિયમ", "1947નો અધિનિયમ"], answer: "1935નો અધિનિયમ", explanation: "ભારત સરકાર અધિનિયમ, 1935 એ પ્રાંતોમાં દ્વિશાસન પ્રણાલીનો અંત કર્યો અને પ્રાંતીય સ્વાયત્તતા આપી, પરંતુ કેન્દ્રીય સ્તરે દ્વિશાસન પ્રણાલીની શરૂઆત કરી." },
+            { question: "૫૧. 'ઇન્ડિપેન્ડન્સ ફોર ઇન્ડિયા લીગ' ના અધ્યક્ષ 1928માં કોણ હતા?", options: ["જવાહરલાલ નેહરુ", "સુભાષચંદ્ર બોઝ", "શ્રીનિવાસ આયંગર", "એસ. સત્યમૂર્તિ"], answer: "શ્રીનિવાસ આયંગર", explanation: "નેહરુ રિપોર્ટમાં ડોમિનિયન સ્ટેટસની માંગના વિરોધમાં, સંપૂર્ણ સ્વતંત્રતાના હિમાયતી જવાહરલાલ નેહરુ અને સુભાષચંદ્ર બોઝે આ લીગની સ્થાપના કરી હતી, જેના અધ્યક્ષ એસ. શ્રીનિવાસ આયંગર હતા." },
+            { question: "૫૨. 'સહગલ-ઢિલ્લોં-શાહ નવાઝ' મુકદ્દમામાં બચાવ પક્ષના વકીલોના જૂથનું નેતૃત્વ કોણે કર્યું હતું?", options: ["મહાત્મા ગાંધી", "સરદાર પટેલ", "ભુલાભાઈ દેસાઈ", "જવાહરલાલ નેહરુ"], answer: "ભુલાભાઈ દેસાઈ", explanation: "આઝાદ હિંદ ફોજના અધિકારીઓ પર લાલ કિલ્લામાં ચાલેલા ઐતિહાસિક મુકદ્દમામાં બચાવ પક્ષના વકીલોનું નેતૃત્વ ભુલાભાઈ દેસાઈએ કર્યું હતું, જેમાં જવાહરલાલ નેહરુ અને તેજ બહાદુર સપ્રુ પણ સામેલ હતા." },
+            { question: "૫૩. દેશબંધુ નવયુવક સંઘની સ્થાપના કોણે કરી હતી?", options: ["સુભાષચંદ્ર બોઝ", "ભગત સિંહ", "તિરુપુર કુમારન", "ચિત્તરંજન દાસ"], answer: "તિરુપુર કુમારન", explanation: "તમિલનાડુના સ્વાતંત્ર્ય સેનાની તિરુપુર કુમારન, જેઓ 'કોડી કાથા કુમારન' તરીકે પણ ઓળખાય છે, તેમણે આ સંગઠનની સ્થાપના કરી હતી." },
+            { question: "૫૪. ભારત છોડો આંદોલન દરમિયાન અરુણા આસફ અલીએ કોંગ્રેસનો ધ્વજ ક્યાં ફરકાવ્યો હતો?", options: ["લાલ કિલ્લો, દિલ્હી", "ગ્વાલિયા ટેન્ક મેદાન, મુંબઈ", "જલિયાંવાલા બાગ, અમૃતસર", "વર્ધા આશ્રમ"], answer: "ગ્વાલિયા ટેન્ક મેદાન, મુંબઈ", explanation: "9 ઓગસ્ટ 1942ના રોજ, જ્યારે તમામ મોટા નેતાઓની ધરપકડ થઈ ગઈ, ત્યારે અરુણા આસફ અલીએ મુંબઈના ગ્વાલિયા ટેન્ક મેદાનમાં હિંમતભેર કોંગ્રેસનો ધ્વજ ફરકાવીને આંદોલનને ગતિ આપી." },
+            { question: "૫૫. બંગાળ રાજ્ય બંદી વિનિયમન (Bengal State Prisoners Regulation) કયા વર્ષે પસાર થયો હતો?", options: ["1793", "1818", "1829", "1858"], answer: "1818", explanation: "આ કાયદો બ્રિટિશ સરકારને કોઈપણ વ્યક્તિને ન્યાયિક પ્રક્રિયા વિના અનિશ્ચિત સમય માટે કેદ કરવાની સત્તા આપતો હતો, જેનો ઉપયોગ રાજકીય વિરોધીઓને દબાવવા માટે થતો હતો." },
+            { question: "૫૬. સ્વતંત્રતા પછી પણ કોણ ભારતના ગવર્નર જનરલ તરીકે ચાલુ રહ્યા?", options: ["લોર્ડ વેવેલ", "લોર્ડ ઇરવિન", "લોર્ડ માઉન્ટબેટન", "ક્લીમેન્ટ એટલી"], answer: "લોર્ડ માઉન્ટબેટન", explanation: "ભારતના પ્રથમ વડાપ્રધાન જવાહરલાલ નેહરુના આગ્રહ પર, લોર્ડ માઉન્ટબેટન સ્વતંત્રતા પછી પણ જૂન 1948 સુધી ભારતના ગવર્નર જનરલ તરીકે પદ પર રહ્યા." }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userAnswers = [];
+
+        // --- AUTH LOGIC ---
+        const authScreen = document.getElementById('auth-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const authForm = document.getElementById('auth-form');
+        const authTitle = document.getElementById('auth-title');
+        const confirmPasswordField = document.getElementById('confirm-password-field');
+        const captchaField = document.getElementById('captcha-field');
+        const authSubmitBtn = document.getElementById('auth-submit-btn');
+        const authToggleLink = document.getElementById('auth-toggle-link');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirm-password');
+        const captchaInput = document.getElementById('captcha');
+        const captchaQuestionSpan = document.getElementById('captcha-question');
+        const authError = document.getElementById('auth-error');
+        
+        let isLogin = false;
+        let captchaAnswer = 0;
+
+        function generateCaptcha() {
+            const num1 = Math.floor(Math.random() * 10) + 1;
+            const num2 = Math.floor(Math.random() * 10) + 1;
+            captchaAnswer = num1 + num2;
+            captchaQuestionSpan.textContent = `કેપ્ચા: ${num1} + ${num2} = ?`;
+        }
+
+        function toggleAuthMode() {
+            isLogin = !isLogin;
+            authError.textContent = '';
+            authForm.reset();
+            if (isLogin) {
+                authTitle.textContent = 'લોગઇન';
+                confirmPasswordField.style.display = 'none';
+                captchaField.style.display = 'none';
+                authSubmitBtn.textContent = 'લોગઇન કરો';
+                authToggleLink.textContent = 'એકાઉન્ટ નથી? રજીસ્ટર કરો';
+            } else {
+                authTitle.textContent = 'રજીસ્ટ્રેશન';
+                confirmPasswordField.style.display = 'block';
+                captchaField.style.display = 'block';
+                authSubmitBtn.textContent = 'રજીસ્ટર કરો';
+                authToggleLink.textContent = 'પહેલેથી જ એકાઉન્ટ છે? લોગઇન કરો';
+                generateCaptcha();
+            }
+        }
+
+        authToggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleAuthMode();
+        });
+
+        authForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            authError.textContent = '';
+
+            if (isLogin) {
+                signInWithEmailAndPassword(auth, email, password)
+                    .catch((error) => {
+                        authError.textContent = 'ઈમેલ અથવા પાસવર્ડ ખોટો છે.';
+                    });
+            } else {
+                const confirmPassword = confirmPasswordInput.value;
+                const captchaValue = parseInt(captchaInput.value, 10);
+                if (password !== confirmPassword) {
+                    authError.textContent = 'બંને પાસવર્ડ મેળ ખાતા નથી.';
+                    return;
+                }
+                if (captchaValue !== captchaAnswer) {
+                    authError.textContent = 'કેપ્ચા જવાબ ખોટો છે.';
+                    generateCaptcha();
+                    return;
+                }
+                createUserWithEmailAndPassword(auth, email, password)
+                    .catch((error) => {
+                        if (error.code === 'auth/email-already-in-use') {
+                            authError.textContent = 'આ ઈમેલ પહેલેથી જ રજીસ્ટર થયેલ છે.';
+                        } else {
+                            authError.textContent = 'રજીસ્ટ્રેશનમાં ભૂલ આવી. ફરી પ્રયાસ કરો.';
+                        }
+                    });
+            }
+        });
+        
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                authScreen.classList.add('hidden');
+                quizScreen.classList.remove('hidden');
+                resultScreen.classList.add('hidden');
+                startQuiz();
+            } else {
+                authScreen.classList.remove('hidden');
+                quizScreen.classList.add('hidden');
+                resultScreen.classList.add('hidden');
+                if (!isLogin) generateCaptcha();
+            }
+        });
+
+        // --- QUIZ LOGIC ---
+        const questionHeader = document.getElementById('question-header');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const explanationBox = document.getElementById('explanation-box');
+        const explanationText = document.getElementById('explanation-text');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const scoreDisplay = document.getElementById('score-display');
+        const questionPalette = document.getElementById('question-palette');
+        const finalScore = document.getElementById('final-score');
+        const restartBtn = document.getElementById('restart-btn');
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers = new Array(quizData.length).fill(null);
+            scoreDisplay.textContent = `સ્કોર: ${score}`;
+            resultScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            generatePalette();
+            loadQuestion();
+        }
+
+        function generatePalette() {
+            questionPalette.innerHTML = '';
+            for (let i = 0; i < quizData.length; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = i + 1;
+                btn.classList.add('palette-btn', 'border-2', 'rounded-full', 'font-bold');
+                btn.addEventListener('click', () => {
+                    currentQuestionIndex = i;
+                    loadQuestion();
+                });
+                questionPalette.appendChild(btn);
+            }
+        }
+        
+        function updatePalette() {
+            const paletteButtons = questionPalette.children;
+            for (let i = 0; i < paletteButtons.length; i++) {
+                paletteButtons[i].classList.remove('current', 'answered');
+                if (userAnswers[i] !== null) {
+                    paletteButtons[i].classList.add('answered');
+                }
+                if (i === currentQuestionIndex) {
+                    paletteButtons[i].classList.add('current');
+                }
+            }
+        }
+
+        function loadQuestion() {
+            explanationBox.classList.add('hidden');
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionHeader.textContent = `પ્રશ્ન ${currentQuestionIndex + 1}:`;
+            questionText.textContent = currentQuestion.question.substring(currentQuestion.question.indexOf('.') + 1).trim();
+            optionsContainer.innerHTML = '';
+
+            const options = ['A', 'B', 'C', 'D'];
+            const shuffledOptions = [...currentQuestion.options].sort(() => Math.random() - 0.5);
+            shuffledOptions.forEach((option, index) => {
+                 const originalIndex = currentQuestion.options.indexOf(option);
+                 const optionDiv = document.createElement('div');
+                optionDiv.innerHTML = `
+                    <button class="option-btn w-full text-left p-3 border-2 rounded-lg bg-gray-50">
+                        <span class="font-bold mr-2">${options[originalIndex]}.</span> ${option}
+                    </button>
+                `;
+                optionsContainer.appendChild(optionDiv);
+                optionDiv.querySelector('button').addEventListener('click', (e) => selectAnswer(e, option));
+            });
+            
+            updateNavButtons();
+            updatePalette();
+
+            if (userAnswers[currentQuestionIndex] !== null) {
+                showPreviousAnswer();
+            }
+        }
+        
+        function updateNavButtons() {
+            prevBtn.disabled = currentQuestionIndex === 0;
+            nextBtn.disabled = userAnswers[currentQuestionIndex] === null;
+            if (currentQuestionIndex === quizData.length - 1 && userAnswers[currentQuestionIndex] !== null) {
+                 nextBtn.textContent = 'પરિણામ જુઓ';
+            } else {
+                 nextBtn.textContent = 'આગળનો પ્રશ્ન';
+            }
+        }
+
+        function selectAnswer(e, selectedOption) {
+            if (userAnswers[currentQuestionIndex] !== null) return;
+
+            const isCorrect = selectedOption === quizData[currentQuestionIndex].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, isCorrect: isCorrect };
+
+            if (isCorrect) {
+                score++;
+                scoreDisplay.textContent = `સ્કોર: ${score}`;
+            }
+            
+            showPreviousAnswer();
+            updatePalette();
+        }
+
+        function showPreviousAnswer() {
+            const userAnswer = userAnswers[currentQuestionIndex];
+            if (!userAnswer) return;
+
+            const correctAnswer = quizData[currentQuestionIndex].answer;
+            
+            Array.from(optionsContainer.querySelectorAll('button')).forEach(button => {
+                button.disabled = true;
+                const optionText = button.textContent.substring(3).trim();
+                
+                if (optionText === correctAnswer) {
+                    button.parentElement.classList.add('correct');
+                }
+                
+                if (optionText === userAnswer.selected && !userAnswer.isCorrect) {
+                    button.parentElement.classList.add('incorrect');
+                }
+            });
+
+            explanationText.textContent = quizData[currentQuestionIndex].explanation;
+            explanationBox.classList.remove('hidden');
+            updateNavButtons();
+        }
+        
+        prevBtn.addEventListener('click', () => {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        });
+        
+        nextBtn.addEventListener('click', () => {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        });
+        
+        function showResult() {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            finalScore.textContent = `${score} / ${quizData.length}`;
+        }
+        
+        restartBtn.addEventListener('click', startQuiz);
+
+    </script>
+</body>
+</html>
